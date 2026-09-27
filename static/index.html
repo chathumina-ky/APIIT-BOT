@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>APIIT BOT</title>
+  <style>
+    /* ====== GENERAL LAYOUT ====== */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    #chat-container {
+      width: 400px;
+      background: #111827;
+      border-radius: 14px;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ====== HEADER ====== */
+    #header {
+      background: #1e293b;
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #2d3748;
+    }
+
+    #header img {
+      height: 40px;
+      vertical-align: middle;
+    }
+
+    #header h2 {
+      display: inline-block;
+      margin: 0 0 0 10px;
+      font-size: 1.1rem;
+      color: #93c5fd;
+      vertical-align: middle;
+    }
+
+    /* ====== CHAT AREA ====== */
+    #chatbox {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      margin: 8px 0;
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 80%;
+      line-height: 1.4;
+      font-size: 0.95rem;
+      word-wrap: break-word;
+    }
+
+    .user {
+      background: #2563eb;
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 3px;
+    }
+
+    .bot {
+      background: #f87171;
+      color: #fff;
+      align-self: flex-start;
+      border-bottom-left-radius: 3px;
+    }
+
+    /* ====== INPUT AREA ====== */
+    #input-area {
+      display: flex;
+      border-top: 1px solid #374151;
+      background: #1f2937;
+    }
+
+    #inputBox {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      color: #fff;
+      border: none;
+      outline: none;
+      font-size: 0.95rem;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 0 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    /* ====== SCROLLBAR ====== */
+    #chatbox::-webkit-scrollbar {
+      width: 6px;
+    }
+    #chatbox::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+
+    /* ====== TYPING INDICATOR ====== */
+    .typing {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin: 4px 0 0 5px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="header">
+      <img src="/apiit_logo_png.png" alt="APIIT Logo">
+      <h2>APIIT BOT</h2>
+    </div>
+
+    <div id="chatbox"></div>
+
+    <div id="input-area">
+      <input type="text" id="inputBox" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const BASE_URL = "/chat";
+
+    function addMessage(chatbox, text, type) {
+      const message = document.createElement("div");
+      message.className = `message ${type}`;
+      message.textContent = text;
+      chatbox.appendChild(message);
+      chatbox.scrollTop = chatbox.scrollHeight;
+      return message;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("inputBox");
+      const chatbox = document.getElementById("chatbox");
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Display user's message
+      addMessage(chatbox, message, "user");
+      input.value = "";
+
+      // Typing indicator
+      const typing = document.createElement("div");
+      typing.className = "typing";
+      typing.innerText = "APIIT BOT is typing...";
+      chatbox.appendChild(typing);
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      try {
+        const response = await fetch(BASE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+        if (!response.ok) throw new Error("The server could not process this message.");
+        const data = await response.json();
+
+        // Remove typing text and show bot reply
+        chatbox.removeChild(typing);
+        addMessage(chatbox, data.response || "Sorry, I could not create a reply.", "bot");
+      } catch (err) {
+        chatbox.removeChild(typing);
+        addMessage(chatbox, "⚠️ Could not connect to the server.", "bot");
+      }
+    }
+  </script>
+</body>
+</html>
